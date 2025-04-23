@@ -36,8 +36,8 @@ jobs:
         run: |
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)
           # Use distinct ECR repo for Unleash
-          ECR_REGISTRY=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-          ECR_REPOSITORY=${{ env.ECR_REPOSITORY_UNLEASH }}
+          ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          ECR_REPOSITORY=${{ env.ECR_REPOSITORY }}
           IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           IMAGE_URI_LATEST=$ECR_REGISTRY/$ECR_REPOSITORY:latest
 
