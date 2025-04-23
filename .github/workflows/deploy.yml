@@ -1,0 +1,83 @@
+# .github/workflows/deploy-unleash.yml
+name: Deploy Unleash to ECR and ECS (Fargate)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-unleash:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}\
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ECR_REPOSITORY_UNLEASH: ${{ secrets.ECR_REPOSITORY }}
+      ECS_CLUSTER_UNLEASH: ${{ secrets.ECS_CLUSTER }}
+      ECS_SERVICE_UNLEASH: ${{ secrets.ECS_SERVICE }}
+      ECS_TASK_DEFINITION_FAMILY_UNLEASH: ${{ secrets.ECS_TASK_DEFINITION_FAMILY }}
+      ECS_CONTAINER_NAME_UNLEASH: ${{ secrets.ECS_CONTAINER_NAME }}
+
+    steps:
+      # Step 1: Check out the code (including your Dockerfile)
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Step 3: Build and Push Docker Image to ECR for Unleash
+      - name: Build and Push Unleash Docker Image to ECR
+        run: |
+          IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+          # Use distinct ECR repo for Unleash
+          ECR_REGISTRY=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          ECR_REPOSITORY=${{ env.ECR_REPOSITORY_UNLEASH }}
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          IMAGE_URI_LATEST=$ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          # Assumes Dockerfile is in the root
+          docker build -t $IMAGE_URI -t $IMAGE_URI_LATEST .
+          docker push $IMAGE_URI
+          docker push $IMAGE_URI_LATEST
+
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      # Step 4: Generate ECS Task Definition File for Unleash
+      - name: Download Unleash task definition
+        run: |
+          # Use distinct task def family for Unleash
+          aws ecs describe-task-definition --region ${{ env.AWS_REGION }} --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} --query taskDefinition > taskdefinition-unleash.json
+
+      - name: Render Unleash task definition with updated image
+        id: render_task_unleash
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: taskdefinition-unleash.json
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ env.IMAGE_URI }}
+
+      - name: Update Unleash task definition file
+        run: |
+          cat ${{ steps.render_task_unleash.outputs.task-definition }} > taskdefinition-unleash.json
+
+      # Step 5: Register the New Unleash ECS Task Definition
+      - name: Register Unleash ECS Task Definition
+        run: |
+          # Use distinct filenames
+          # Remove unsupported fields from taskdefinition.json and save to taskdef.json
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' taskdefinition-unleash.json > taskdef-unleash.json
+          # Register the new task definition
+          aws ecs register-task-definition --cli-input-json file://taskdef-unleash.json
+
+      # Step 6: Update the Unleash ECS Service with the New Task Definition Revision
+      - name: Update Unleash ECS Service
+        run: |
+          # Use distinct filenames and variables
+          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://taskdef-unleash.json --query "taskDefinition.taskDefinitionArn" --output text)
+          aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.ECS_SERVICE }} --task-definition $TASK_DEF_ARN
