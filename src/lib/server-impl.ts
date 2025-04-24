@@ -57,7 +57,11 @@ async function createApp(
   const logger = config.getLogger("server-impl.js");
   const serverVersion = config.enterpriseVersion ?? version;
   // @ts-ignore
-  console.log("UNLEASH CONFIG", config);
+  console.log("---start---");
+  // @ts-ignore
+  console.log("config.server", config.server);
+  // @ts-ignore
+  console.log("---end---");
   const db = createDb(config);
   const stores = createStores(config, db);
   await compareAndLogPostgresVersion(config, stores.settingStore);
@@ -160,7 +164,7 @@ async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
   // @ts-ignore
   console.log("---start---");
   // @ts-ignore
-  console.log("2UNLEASH CONFIG", config);
+  console.log("CONFIG", config.db);
   // @ts-ignore
   console.log("---end---");
 
