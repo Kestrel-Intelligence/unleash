@@ -56,12 +56,12 @@ async function createApp(
   // Database dependencies (stateful)
   const logger = config.getLogger("server-impl.js");
   const serverVersion = config.enterpriseVersion ?? version;
-  // @ts-ignore
-  console.log("---start---");
-  // @ts-ignore
-  console.log("config.server", config.server);
-  // @ts-ignore
-  console.log("---end---");
+  //   // @ts-ignore
+  //   console.log("---start---");
+  //   // @ts-ignore
+  //   console.log("config.server", config.server);
+  //   // @ts-ignore
+  //   console.log("---end---");
   const db = createDb(config);
   const stores = createStores(config, db);
   await compareAndLogPostgresVersion(config, stores.settingStore);
