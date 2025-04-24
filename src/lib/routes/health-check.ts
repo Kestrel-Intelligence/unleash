@@ -25,7 +25,7 @@ export class HealthCheckController extends Controller {
     // @ts-ignore
     console.log("---start HealthCheckController---");
     // @ts-ignore
-    console.log("config.server", config.server);
+    console.log("1config.server", config.server);
     // @ts-ignore
     console.log("---end HealthCheckController---");
 
@@ -51,6 +51,8 @@ export class HealthCheckController extends Controller {
   }
 
   async getHealth(_: Request, res: Response<HealthCheckSchema>): Promise<void> {
+    this.logger.info("--- HealthCheckController: getHealth called ---");
     res.status(200).json({ health: "GOOD" });
+    this.logger.info("--- HealthCheckController: getHealth responded ---");
   }
 }
