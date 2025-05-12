@@ -154,13 +154,21 @@ async function createApp(
 }
 
 async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
+  // @ts-ignore
+  console.log("---start1---");
+
+  // @ts-ignore
+  console.log("opts", opts);
+
   const config = createConfig(opts);
   // @ts-ignore
-  console.log("---start---");
-  // @ts-ignore
   console.log("CONFIG", config.db);
+
   // @ts-ignore
-  console.log("---end---");
+  console.log("process.env", process.env);
+
+  // @ts-ignore
+  console.log("---end1---");
 
   const logger = config.getLogger("server-impl.js");
 
