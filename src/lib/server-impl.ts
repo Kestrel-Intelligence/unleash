@@ -155,7 +155,7 @@ async function createApp(
 
 async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
   // @ts-ignore
-  console.log("---start logs here---");
+  console.log("---start logs here!---");
 
   // @ts-ignore
   // console.log("opts", opts);
