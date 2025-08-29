@@ -57,6 +57,8 @@ async function createApp(
   const logger = config.getLogger("server-impl.js");
   const serverVersion = config.enterpriseVersion ?? version;
   const db = createDb(config);
+  // @ts-ignore
+  console.log("db", db);
   const stores = createStores(config, db);
   await compareAndLogPostgresVersion(config, stores.settingStore);
   const services = createServices(stores, config, db);
@@ -176,9 +178,13 @@ async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
     if (config.db.disableMigration) {
       logger.info("DB migration: disabled");
     } else {
-      logger.info("DB migration: start");
+      // logger.info("DB migration: start");
+      // @ts-ignore
+      console.log("DB migration: start");
       if (config.flagResolver.isEnabled("migrationLock")) {
-        logger.info("Running migration with lock");
+        // logger.info("Running migration with lock");
+        // @ts-ignore
+        console.log("Running migration with lock");
         const lock = withDbLock(config.db, {
           lockKey: defaultLockKey,
           timeout: defaultTimeout,
@@ -186,18 +192,23 @@ async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
         });
         await lock(migrateDb)(config);
       } else {
-        logger.info("Running migration without lock");
+        // @ts-ignore
+        console.log("Running migration without lock");
         await migrateDb(config);
       }
 
       logger.info("DB migration: end");
     }
   } catch (err) {
+    // @ts-ignore
+    console.log("Failed to migrate db", err);
     logger.error("Failed to migrate db", err);
     throw err;
   }
 
   const unleash = await createApp(config, true);
+  // @ts-ignore
+  console.log("unleash", unleash);
   if (config.server.gracefulShutdownEnable) {
     registerGracefulShutdown(unleash, logger);
   }
