@@ -57,10 +57,25 @@ async function createApp(
   const logger = config.getLogger("server-impl.js");
   const serverVersion = config.enterpriseVersion ?? version;
   const db = createDb(config);
+
   // @ts-ignore
-  console.log("db", db);
+  console.log("🗄️ Database connection created");
+  // @ts-ignore
+  console.log(" Database config:", {
+    host: config.db.host,
+    port: config.db.port,
+    database: config.db.database,
+    user: config.db.user,
+  });
+
   const stores = createStores(config, db);
+
+  // @ts-ignore
+  console.log("🏪 Database stores created successfully");
   await compareAndLogPostgresVersion(config, stores.settingStore);
+
+  // @ts-ignore
+  console.log("🚀 Services initialized successfully");
   const services = createServices(stores, config, db);
   await initialServiceSetup(config, services);
 
@@ -142,6 +157,13 @@ async function createApp(
       server.keepAliveTimeout = config.server.keepAliveTimeout;
       server.headersTimeout = config.server.headersTimeout;
       server.on("listening", () => {
+        // @ts-ignore
+        console.log("🚀 SERVER STARTED - Listening on:", server.address());
+        // @ts-ignore
+        console.log(
+          "🌐 Server is now accepting connections on port:",
+          config.listen
+        );
         resolve({
           ...unleash,
           server,

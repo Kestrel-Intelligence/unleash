@@ -44,6 +44,14 @@ export class HealthCheckController extends Controller {
   }
 
   async getHealth(_: Request, res: Response<HealthCheckSchema>): Promise<void> {
+    // @ts-ignore
+    console.log("🏥 HEALTH CHECK REQUEST RECEIVED");
+    // @ts-ignore
+    console.log(" Request path:", _.path);
+    // @ts-ignore
+    console.log(" Request URL:", _.url);
+    // @ts-ignore
+    console.log(" Request headers:", _.headers);
     res.status(200).json({ health: "GOOD" });
   }
 }
