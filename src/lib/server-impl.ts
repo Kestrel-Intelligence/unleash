@@ -192,7 +192,7 @@ async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
   // console.log("process.env", process.env);
 
   // @ts-ignore
-  console.log("---end logs here---");
+  console.log("---end logs here!!---");
 
   const logger = config.getLogger("server-impl.js");
 
