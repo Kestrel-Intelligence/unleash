@@ -326,6 +326,8 @@ const parseEnvVarInitialAdminUser = (): UsernameAdminUser | undefined => {
 };
 
 const buildDefaultAuthOption = () => {
+  // @ts-ignore
+  console.log("!!buildDefaultAuthOption");
   return {
     demoAllowAdminLogin: parseEnvVarBoolean(
       process.env.AUTH_DEMO_ALLOW_ADMIN_LOGIN,
@@ -560,6 +562,10 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
       : options.authentication) || {},
     { initApiTokens: initApiTokens },
   ]);
+
+  // @ts-ignore
+  console.log("!!authentication", JSON.stringify(authentication));
+
   // make sure init tokens appear only once
   authentication.initApiTokens = [
     ...new Map(
