@@ -182,7 +182,7 @@ async function start(opts: IUnleashOptions = {}): Promise<IUnleash> {
   console.log("---start logs here!!---");
 
   // @ts-ignore
-  // console.log("opts", opts);
+  console.log("opts", opts);
 
   const config = createConfig(opts);
   // @ts-ignore
