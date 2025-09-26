@@ -148,17 +148,32 @@ class UserService {
     }
   }
 
+  /**
+   * Initialize admin user. If allowAdminPasswordOverride is true and initialAdminUser.password is provided,
+   * will update the password of an existing admin user with the same username.
+   *
+   * To enable password override, set allowAdminPasswordOverride: true in your authentication config:
+   * authentication: { allowAdminPasswordOverride: true, initialAdminUser: { username: 'admin', password: 'newpass' } }
+   */
   async initAdminUser({
     createAdminUser,
     initialAdminUser,
-  }: Pick<IAuthOption, "createAdminUser" | "initialAdminUser">): Promise<void> {
+    allowAdminPasswordOverride,
+  }: Pick<
+    IAuthOption,
+    "createAdminUser" | "initialAdminUser" | "allowAdminPasswordOverride"
+  >): Promise<void> {
     if (!createAdminUser) return Promise.resolve();
 
-    return this.initAdminUsernameUser(initialAdminUser);
+    return this.initAdminUsernameUser(
+      initialAdminUser,
+      allowAdminPasswordOverride
+    );
   }
 
   async initAdminUsernameUser(
-    usernameAdminUser?: UsernameAdminUser
+    usernameAdminUser?: UsernameAdminUser,
+    allowAdminPasswordOverride?: boolean
   ): Promise<void> {
     const username = usernameAdminUser?.username || "admin";
     const password = usernameAdminUser?.password || "unleash4all";
@@ -184,9 +199,9 @@ class UserService {
       } catch (e) {
         this.logger.error(`Unable to create default user '${username}'`);
       }
-    } else if (usernameAdminUser?.password) {
+    } else if (usernameAdminUser?.password && allowAdminPasswordOverride) {
       // If users exist but we have a password from environment variables,
-      // try to update the existing admin user's password
+      // and password override is enabled, try to update the existing admin user's password
       try {
         const existingUser = await this.store.getByQuery({ username });
         const rootRole = await this.accessService.getRootRoleForUser(
@@ -215,6 +230,10 @@ class UserService {
           `Could not update password for user '${username}': ${e.message}`
         );
       }
+    } else if (usernameAdminUser?.password && !allowAdminPasswordOverride) {
+      this.logger.info(
+        `Admin password override is disabled. To enable password updates for existing admin users, set allowAdminPasswordOverride: true in your authentication configuration.`
+      );
     }
   }
 

@@ -194,7 +194,12 @@ describe("Default admin initialization", () => {
     });
   });
 
-  test("Should update existing admin user password when UNLEASH_DEFAULT_ADMIN_PASSWORD is provided", async () => {
+  test("Should default allowAdminPasswordOverride to false", async () => {
+    const config = createTestConfig();
+    expect(config.authentication.allowAdminPasswordOverride).toBe(false);
+  });
+
+  test("Should update existing admin user password when UNLEASH_DEFAULT_ADMIN_PASSWORD is provided and override is enabled", async () => {
     const userStore = new UserStoreMock();
     const accessService = new AccessServiceMock();
     const resetTokenStore = new FakeResetTokenStore();
@@ -233,7 +238,7 @@ describe("Default admin initialization", () => {
     );
     expect(originalUser.username).toBe(DEFAULT_ADMIN_USERNAME);
 
-    // Now try to update the password with a new one
+    // Now try to update the password with a new one (override enabled)
     const newPassword = "newpassword123";
     await service.initAdminUser({
       createAdminUser: true,
@@ -241,6 +246,7 @@ describe("Default admin initialization", () => {
         username: DEFAULT_ADMIN_USERNAME,
         password: newPassword,
       },
+      allowAdminPasswordOverride: true,
     });
 
     // Verify the user can login with the new password
@@ -253,6 +259,71 @@ describe("Default admin initialization", () => {
     // Verify the old password no longer works
     await expect(
       service.loginUser(DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD)
+    ).rejects.toThrow(
+      "The combination of password and username you provided is invalid"
+    );
+  });
+
+  test("Should NOT update existing admin user password when override is disabled (default behavior)", async () => {
+    const userStore = new UserStoreMock();
+    const accessService = new AccessServiceMock();
+    const resetTokenStore = new FakeResetTokenStore();
+    const resetTokenService = new ResetTokenService(
+      { resetTokenStore },
+      config
+    );
+    const sessionStore = new FakeSessionStore();
+    const sessionService = new SessionService({ sessionStore }, config);
+    const emailService = new EmailService(config);
+    const eventService = createFakeEventsService(config);
+    const settingService = new SettingService(
+      {
+        settingStore: new FakeSettingStore(),
+      },
+      config,
+      eventService
+    );
+
+    const service = new UserService({ userStore }, config, {
+      accessService,
+      resetTokenService,
+      emailService,
+      eventService,
+      sessionService,
+      settingService,
+    });
+
+    // First, create an admin user
+    await service.initAdminUser({ createAdminUser: true });
+
+    // Verify the user can login with the default password
+    const originalUser = await service.loginUser(
+      DEFAULT_ADMIN_USERNAME,
+      DEFAULT_ADMIN_PASSWORD
+    );
+    expect(originalUser.username).toBe(DEFAULT_ADMIN_USERNAME);
+
+    // Now try to update the password with a new one (override disabled - default)
+    const newPassword = "newpassword123";
+    await service.initAdminUser({
+      createAdminUser: true,
+      initialAdminUser: {
+        username: DEFAULT_ADMIN_USERNAME,
+        password: newPassword,
+      },
+      allowAdminPasswordOverride: false, // explicitly disabled
+    });
+
+    // Verify the user can still login with the original password (no update occurred)
+    const unchangedUser = await service.loginUser(
+      DEFAULT_ADMIN_USERNAME,
+      DEFAULT_ADMIN_PASSWORD
+    );
+    expect(unchangedUser.username).toBe(DEFAULT_ADMIN_USERNAME);
+
+    // Verify the new password does NOT work
+    await expect(
+      service.loginUser(DEFAULT_ADMIN_USERNAME, newPassword)
     ).rejects.toThrow(
       "The combination of password and username you provided is invalid"
     );

@@ -338,6 +338,7 @@ const buildDefaultAuthOption = () => {
     customAuthHandler: defaultCustomAuthDenyAll,
     createAdminUser: true,
     initialAdminUser: parseEnvVarInitialAdminUser(),
+    allowAdminPasswordOverride: false, // Default to false, can be overridden programmatically
     initApiTokens: [],
   };
 };
